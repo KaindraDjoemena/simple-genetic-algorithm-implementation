@@ -19,6 +19,7 @@ class Population:
     def establishPopulation(self):
         self.population = []
 
+        # Fill the population with organisms that has random genes
         for _ in range(self.initial_population_number):
             organism = Organism([random.choice([1, 0]) for gene in range(self.target)])
             self.population.append(organism)
@@ -31,7 +32,7 @@ class Population:
 
         # Adding the organism in the selection pool N times. N is the fitness score of the organism
         for organism in self.population:
-            for _ in range(organism.calculateFitness() ):
+            for _ in range(organism.calculateFitness()):
                 selection_pool.append(organism)
 
         # Make A pairs of parents selected from the selection pool
@@ -52,43 +53,66 @@ class Population:
 
             self.population.append(offspring1) # Add to the population
             self.population.append(offspring2)
+        
+        selection_pool.clear() # Clears the pool
+
+
+    def getExtinctionPool(self):
+        # Setting up the extinction pool
+        extinction_pool = []
+        for organism in self.population:
+            insert_n_times = math.ceil((self.target * 10) / organism.calculateFitness())
+
+            for n in range(insert_n_times):
+                extinction_pool.append(organism)
+        
+        return extinction_pool
 
 
     # Eliminates organisms with the 1st and 2nd lowest fitness scores
     def eliminateOrganisms(self):
 
-        lowest_fitness_score = min(self.getFitnessScores())
-
-        # Eliminates the weakest
-        for organism in self.population:
-            if organism.calculateFitness() == lowest_fitness_score:
-                self.population.remove(organism)
+        extinction_pool = self.getExtinctionPool()
 
         # The population has a 50% chance of having 10% of their population eliminated
-        # and 15% for the rest of the 50% percent
-        if random.choice(range(1)) == 0:
-            random_organism_death_count = math.ceil(len(self.population) * (15/100))
-            for i in range(random_organism_death_count):
-                if len(self.population) == 0:
-                    break
-                self.population.remove(random.choice(self.population))
-        else:
-            random_organism_death_count = math.ceil(len(self.population) * (10/100))
-            for i in range(random_organism_death_count):
-                if len(self.population) == 0:
-                    break
-                self.population.remove(random.choice(self.population))
+        # and 20% for the rest of the 50% percent
+        percentage = 20 if random.choice(range(1)) == 0 else 10
+
+        # Eliminates the organisms
+        random_organism_death_count = math.ceil(len(self.population) * (percentage/100))
+        for i in range(random_organism_death_count):
+            if len(self.population) == 0:
+                break
+            
+            organism = random.choice(extinction_pool)
+
+            self.population.remove(organism)
+
+            # Removes organism from the extinction pool
+            while organism in extinction_pool:
+                extinction_pool.remove(organism)
 
 
-    # Extinction waves to cut the population by 98%
+    # Extinction waves to cut the population by 99%
     def executeMassExtinction(self, extinction_wave):
 
         print(f"[wave: {extinction_wave+1}]")
 
-        # Eliminates 98% of the whole population
+        # Eliminates 99% of the whole population
         random_organism_death_count = math.ceil(99/100 * len(self.population))
+
+        # Gets me the extinction pool
+        extinction_pool = self.getExtinctionPool()
+
+        # Picking organisms from the extinction pool
         for i in range(random_organism_death_count):
-            self.population.remove(random.choice(self.population))
+            organism = random.choice(extinction_pool)
+
+            self.population.remove(organism) # Removes organism from the population
+
+            # Removes organism from the extinction pool
+            while organism in extinction_pool:
+                extinction_pool.remove(organism)
 
 
     # Background extinction to stabilize the population
@@ -96,8 +120,19 @@ class Population:
 
         # Eliminates 55% of the whole population
         random_organism_death_count = math.ceil(55/100 * len(self.population))
+
+        # Gets me the extinction pool
+        extinction_pool = self.getExtinctionPool()
+
+        # Picking organisms from the extinction pool
         for i in range(random_organism_death_count):
-            self.population.remove(random.choice(self.population))
+            organism = random.choice(extinction_pool)
+
+            self.population.remove(organism) # Removes organism from the population
+
+            # Removes organism from the extinction pool
+            while organism in extinction_pool:
+                extinction_pool.remove(organism)
 
 
     # Get the fitness scores
